@@ -1,6 +1,19 @@
-import { PrismaClient } from "../src/generated/prisma/client";
+import dotenv from "dotenv";
+dotenv.config();
 
-const prisma = new PrismaClient();
+import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
+
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DATABASE_URL environment variable is not set");
+}
+console.log("Connecting to:", connectionString.substring(0, 40) + "...");
+
+const pool = new pg.Pool({ connectionString, ssl: { rejectUnauthorized: false } });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 const books = [
   {

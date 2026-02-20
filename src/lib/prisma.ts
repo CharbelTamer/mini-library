@@ -1,4 +1,6 @@
 import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neon } from "@neondatabase/serverless";
 
 const globalForPrisma = globalThis as unknown as {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -6,17 +8,16 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  try {
-    // @ts-expect-error Prisma v7 strict typing for constructor options
-    return new PrismaClient();
-  } catch {
-    console.warn("PrismaClient initialization failed - database may not be available");
-    return new Proxy({} as InstanceType<typeof PrismaClient>, {
-      get: () => {
-        throw new Error("Database not available");
-      },
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    console.warn("DATABASE_URL not set");
+    return new Proxy({}, {
+      get: () => { throw new Error("Database not available"); },
     });
   }
+  const sql = neon(connectionString);
+  const adapter = new PrismaNeon(sql);
+  return new PrismaClient({ adapter });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
