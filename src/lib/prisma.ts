@@ -1,6 +1,5 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
-import { neon } from "@neondatabase/serverless";
 
 const globalForPrisma = globalThis as unknown as {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,8 +14,7 @@ function createPrismaClient() {
       get: () => { throw new Error("Database not available"); },
     });
   }
-  const sql = neon(connectionString);
-  const adapter = new PrismaNeon(sql);
+  const adapter = new PrismaNeon({ connectionString });
   return new PrismaClient({ adapter });
 }
 
