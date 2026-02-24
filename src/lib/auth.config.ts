@@ -16,6 +16,7 @@ export const authConfig: NextAuthConfig = {
   pages: {
     signIn: "/signin",
   },
+  session: { strategy: "jwt" },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
@@ -27,10 +28,17 @@ export const authConfig: NextAuthConfig = {
       if (!isLoggedIn) return false;
       return true;
     },
-    session({ session, user }) {
-      if (session.user && user) {
-        session.user.id = user.id;
-        session.user.role = (user as unknown as Record<string, unknown>).role as string;
+    jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role ?? "user";
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (session.user && token) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       return session;
     },
